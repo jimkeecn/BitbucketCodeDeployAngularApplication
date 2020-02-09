@@ -1,0 +1,39 @@
+# This is a sample build configuration for JavaScript.
+# Check our guides at https://confluence.atlassian.com/x/14UWN for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: node:10.15.3
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - node
+        script: # Modify the commands below to build your repository.
+          - npm install npm@latest -g
+          - npm install -g @angular/cli
+          - npm install
+          - ng build --prod
+          - node archive.js
+          - pipe: atlassian/aws-code-deploy:0.4.0
+            variables:
+               AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+               AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+               APPLICATION_NAME: $APPLICATION_NAME
+               ZIP_FILE: 'deploybundle.zip'
+               S3_BUCKET: $S3_BUCKET
+               COMMAND: 'upload'
+          - pipe: atlassian/aws-code-deploy:0.4.0
+            variables:
+               AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+               AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+               APPLICATION_NAME: $APPLICATION_NAME
+               DEPLOYMENT_GROUP: $DEPLOYMENT_GROUP
+               S3_BUCKET: $S3_BUCKET
+               COMMAND: 'deploy'
+               WAIT: 'true'
+               IGNORE_APPLICATION_STOP_FAILURES: 'true'
+               FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
